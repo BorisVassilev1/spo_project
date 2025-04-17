@@ -1,0 +1,3 @@
+[submodule "lib/yoghurtgl"]
+	path = lib/yoghurtgl
+	url = https://github.com/BorisVassilev1/yoghurtgl.git
