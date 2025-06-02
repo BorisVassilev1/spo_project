@@ -1,0 +1,46 @@
+
+#ifdef GL_ES
+precision highp float;
+#endif
+
+layout(local_size_x = 20, local_size_y = 20) in;
+
+struct Particle {
+	vec3	position;
+	float	mass;
+	vec3	velocity;
+};
+
+
+layout(std430, binding = 1) volatile coherent restrict buffer ParticleBuffer {
+	Particle particleData[];
+};
+
+uniform float deltaTime = 0;
+uniform ivec2 resolution;
+const float EPS = 1.f;
+
+void main() {
+	uvec3 invID = gl_GlobalInvocationID;
+	if(invID.x >= resolution.x || invID.y >= resolution.y) return;
+	uint id = invID.x + int(resolution.x) * invID.y;
+
+	Particle p1 = particleData[id];
+
+	for(int i = 0; i < particleData.length(); i++) {
+		if(i == id) continue;
+		Particle p2	  = particleData[i];
+		vec3 diff	  = p2.position - p1.position;
+		float	  dist_sq = dot(diff, diff);
+		float	  dist	  = sqrt(dist_sq);
+		if(dist < .0001) {
+			continue;
+		}
+		float	  div	  = 1.f / (max(dist_sq, EPS) * dist);
+		p1.velocity += diff * p2.mass * div * deltaTime;
+	}
+
+	particleData[id] = p1;
+}
+
+
