@@ -8,6 +8,7 @@
 #include "camera.h"
 #include "input.h"
 #include <renderer.h>
+#include <bench.hpp>
 
 int main() {
 	if (ygl::init()) { dbLog(ygl::LOG_ERROR, "Failed to initialize YoghurtGL"); }
@@ -36,42 +37,12 @@ int main() {
 		if (key == GLFW_KEY_R && action == GLFW_PRESS && mods == GLFW_MOD_CONTROL) { asman->reloadShaders(); }
 	});
 
-	renderer->setClearColor(glm::vec4(0, 0, 0, 1));
-	while (!window.shouldClose()) {
-		window.beginFrame();
-
-		if (ygl::Keyboard::getKey(GLFW_KEY_J) == GLFW_PRESS) {
-			camera.width *= 1. - 1 * window.deltaTime;
-			camera.updateProjectionMatrix();
-		}
-		if (ygl::Keyboard::getKey(GLFW_KEY_K) == GLFW_PRESS) {
-			camera.width *= 1. + 1 * window.deltaTime;
-			camera.updateProjectionMatrix();
-		}
-		float speed = camera.width * .5 * window.deltaTime;
-		if (ygl::Keyboard::getKey(GLFW_KEY_W) == GLFW_PRESS) {
-			camera.transform.position.y += speed;
-			camera.getViewMatrix();
-		}
-		if (ygl::Keyboard::getKey(GLFW_KEY_A) == GLFW_PRESS) {
-			camera.transform.position.x -= speed;
-			camera.getViewMatrix();
-		}
-		if (ygl::Keyboard::getKey(GLFW_KEY_S) == GLFW_PRESS) {
-			camera.transform.position.y -= speed;
-			camera.getViewMatrix();
-		}
-		if (ygl::Keyboard::getKey(GLFW_KEY_D) == GLFW_PRESS) {
-			camera.transform.position.x += speed;
-			camera.getViewMatrix();
-		}
-
-		nbody->gui();
-		camera.update();
-		scene.doWork();
-
-		window.swapBuffers();
-	}
+	window.beginFrame();
+	BENCH({ 
+		nbody->doWork();
+		glFinish();
+	}, 100, std::chrono::milliseconds);
+	window.swapBuffers();
 
 	ygl::terminate();
 	return 0;

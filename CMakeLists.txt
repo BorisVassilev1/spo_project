@@ -41,3 +41,30 @@ set_target_properties(msgBox PROPERTIES
 
 target_compile_options(pacman PRIVATE ${YGL_COMPILE_OPTIONS})
 target_link_options(pacman PRIVATE ${YGL_LINK_OPTIONS})
+
+
+
+add_executable (nogui "nogui.cpp" "src/NBody.cpp")
+add_definitions(-DYGL_NO_ASSIMP)
+target_link_libraries(nogui PRIVATE YoghurtGL)
+target_include_directories(nogui PRIVATE src)
+if (MSVC)
+	set_target_properties(nogui PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY ../../../
+	)
+else (MSVC)
+	set_target_properties(nogui PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY ../
+	)
+	set_target_properties(YoghurtGL PROPERTIES
+		LIBRARY_OUTPUT_DIRECTORY ../../../
+	)
+endif (MSVC)
+set_target_properties(msgBox PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+)
+
+target_compile_options(nogui PRIVATE ${YGL_COMPILE_OPTIONS})
+target_link_options(nogui PRIVATE ${YGL_LINK_OPTIONS})
+
+

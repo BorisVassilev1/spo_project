@@ -15,6 +15,9 @@ uniform float time;
 uniform int drawMode = 0;
 uniform int numParticles = 0;
 
+uniform int particleSize = 2;
+uniform float transparency = .3;
+
 layout(location = 0) in vec4 particleData0;
 layout(location = 1) in vec4 particleData1;
 
@@ -39,13 +42,13 @@ void main() {
 	//gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0);
 	gl_Position = projectionMatrix * viewMatrix * worldMatrix * vec4(position, 1.0);
 
-	gl_PointSize = 2.0;
+	gl_PointSize = particleSize;
 
 	vVertexPos = position;
 
 
 	if(drawMode == 0) {
-		vColor = vec4(1.0, 1.0, 1.0, .3);
+		vColor = vec4(1.0, 1.0, 1.0, transparency);
 	}
 
 	if(drawMode == 1) {

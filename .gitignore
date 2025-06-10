@@ -2,3 +2,4 @@ build/
 pacman
 msgBox
 *.ini
+nogui
