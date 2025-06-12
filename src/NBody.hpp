@@ -121,8 +121,8 @@ class NBodyGPU : public NBodyInstanced {
 	}
 
 	void computeGPU() {
-		int y = (numParticles + 19) / 20;
-		int x = 20;
+		int y = (numParticles + velocityUpdate->groupSize.x-1) / velocityUpdate->groupSize.x;
+		int x = velocityUpdate->groupSize.x;
 
 		velocityUpdate->bind();
 		velocityUpdate->setUniform("deltaTime", deltaTime);
