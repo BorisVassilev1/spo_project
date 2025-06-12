@@ -10,7 +10,6 @@
 #include <renderer.h>
 #include <glm/gtx/norm.hpp>
 #include "imgui.h"
-#include "threadpool.hpp"
 
 #include <buffer.h>
 #include <material.h>
@@ -67,6 +66,8 @@ class NBodyInstanced : public ygl::ISystem {
 	int				   particleSize		   = 2;
 	float			   transparency		   = .3;
 
+	bool draw = true;
+
 	enum DrawMode : int {
 		WHITE,
 		VELOCITY,
@@ -76,8 +77,8 @@ class NBodyInstanced : public ygl::ISystem {
 	};
 	DrawMode drawMode = WHITE;
 
-	NBodyInstanced(ygl::Scene *scene, std::size_t N)
-		: ISystem(scene), N(N), particleData(GL_ARRAY_BUFFER, N * sizeof(Particle), GL_DYNAMIC_DRAW) {}
+	NBodyInstanced(ygl::Scene *scene, std::size_t N, bool draw = true)
+		: ISystem(scene), N(N), particleData(GL_ARRAY_BUFFER, N * sizeof(Particle), GL_DYNAMIC_DRAW), draw(draw) {}
 
 	void init() override;
 
@@ -113,25 +114,28 @@ class NBodyGPU : public NBodyInstanced {
 	std::unique_ptr<ygl::ComputeShader> velocityUpdate = std::make_unique<ygl::ComputeShader>("./shaders/gravity.comp");
 	std::unique_ptr<ygl::ComputeShader> positionUpdate = std::make_unique<ygl::ComputeShader>("./shaders/update.comp");
 
-	NBodyGPU(ygl::Scene *scene, std::size_t numParticles) : NBodyInstanced(scene, numParticles) {
+	NBodyGPU(ygl::Scene *scene, std::size_t numParticles, bool draw) : NBodyInstanced(scene, numParticles, draw) {
 		dbLog(ygl::LOG_DEBUG, "NBodyGPU created with ", numParticles, " particles");
-		dbLog(ygl::LOG_DEBUG, "Shader Group Size: ", velocityUpdate->groupSize.x, " ",
-			   velocityUpdate->groupSize.y, " ", velocityUpdate->groupSize.z);
+		dbLog(ygl::LOG_DEBUG, "Shader Group Size: ", velocityUpdate->groupSize.x, " ", velocityUpdate->groupSize.y, " ",
+			  velocityUpdate->groupSize.z);
 	}
 
 	void computeGPU() {
+		int y = (numParticles + 19) / 20;
+		int x = 20;
+
 		velocityUpdate->bind();
 		velocityUpdate->setUniform("deltaTime", deltaTime);
-		velocityUpdate->setUniform("resolution", glm::ivec2(numParticles, 1));
+		velocityUpdate->setUniform("resolution", glm::ivec2(x, y));
 		ygl::Shader::setSSBO(particleData.getID(), 1);
-		ygl::Renderer::compute(velocityUpdate.get(), numParticles, 1, 1);
-		//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		ygl::Renderer::compute(velocityUpdate.get(), x, y, 1);	   // TODO: use better group size
+		// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 		positionUpdate->bind();
 		positionUpdate->setUniform("deltaTime", deltaTime);
-		positionUpdate->setUniform("resolution", glm::ivec2(numParticles, 1));
+		positionUpdate->setUniform("resolution", glm::ivec2(x, y));
 		ygl::Shader::setSSBO(particleData.getID(), 1);
-		ygl::Renderer::compute(positionUpdate.get(), numParticles, 1, 1);
+		ygl::Renderer::compute(positionUpdate.get(), x, y, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 
@@ -154,9 +158,8 @@ class NBodyCPU : public NBodyInstanced {
    public:
 	static const char	 *name;
 	std::vector<Particle> particles;
-	ThreadPool		 threadPool;
 
-	NBodyCPU(ygl::Scene *scene, std::size_t N) : NBodyInstanced(scene, N), threadPool(4) {}
+	NBodyCPU(ygl::Scene *scene, std::size_t N, bool draw = true) : NBodyInstanced(scene, N, draw) {}
 
 	void reset() override {
 		particles.clear();
@@ -183,7 +186,7 @@ class NBodyCPU : public NBodyInstanced {
 			p1.position += p1.velocity * deltaTime;
 		}
 
-		this->setParticles(particles);
+		// this->setParticles(particles);
 	}
 
 	void doWork() override { computeCPU(); }
@@ -191,7 +194,3 @@ class NBodyCPU : public NBodyInstanced {
 	void write(std::ostream &) override { assert(0); }
 	void read(std::istream &) override { assert(0); }
 };
-
-
-
-

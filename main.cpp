@@ -17,7 +17,7 @@ int main() {
 
 	ygl::Scene scene;
 	scene.registerSystem<ygl::Renderer>(&window);
-	scene.registerSystem<NBodyGPU>(10000);
+	scene.registerSystem<NBodyGPU>(100000, true);
 
 	ygl::OrthographicCamera camera(20, window, .1, 10);
 	camera.transform.position = glm::vec3(0.0f, 0.0f, 5.0f);

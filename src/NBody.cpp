@@ -10,7 +10,7 @@ void NBodyInstanced::createParticles(std::size_t numParticles, const std::functi
 	std::mt19937					gen(rd());
 	std::normal_distribution<float> d(0, 30);
 
-	float mass = 10000 + .7 * numParticles;
+	float mass = numParticles + .4 * numParticles;
 
 	for (std::size_t i = 0; i < numParticles; ++i) {
 		float x = d(gen);
@@ -33,16 +33,17 @@ void NBodyInstanced::createParticles(std::size_t numParticles, const std::functi
 	}
 
 	Particle p;
-	p.mass = 10000;
+	p.mass = numParticles;
 	initFunc(p);
 }
 
 void NBodyInstanced::init() {
 	this->asman	   = scene->getSystem<ygl::AssetManager>();
-	this->renderer = scene->getSystem<ygl::Renderer>();
+	if(draw) this->renderer = scene->getSystem<ygl::Renderer>();
 
 	reset();
 
+	if(!draw) return;
 	ygl::VFShader *shader = new ygl::VFShader("./shaders/particle.vs", "./shaders/particle.fs");
 	particleShaderIndex	  = asman->addShader(shader, "particleShader", false);
 
@@ -64,6 +65,7 @@ void NBodyInstanced::init() {
 		if (shader->hasUniform("numParticles")) shader->setUniform("numParticles", (int)numParticles);
 		if (shader->hasUniform("particleSize")) shader->setUniform("particleSize", (int)particleSize);
 		if (shader->hasUniform("transparency")) shader->setUniform("transparency", transparency);
+		if(shader->hasUniform("N")) shader->setUniform("N", (int)N);
 
 		ParticleMesh *mesh = (ParticleMesh *)asman->getMesh(particleMeshIndex);
 		mesh->bind();

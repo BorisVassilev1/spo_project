@@ -3,3 +3,9 @@ pacman
 msgBox
 *.ini
 nogui
+
+doc/*
+!doc/doc.tex
+!doc/refs.bib
+!doc/data.csv
+*.log

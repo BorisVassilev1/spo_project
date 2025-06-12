@@ -14,6 +14,7 @@ uniform mat4 worldMatrix;
 uniform float time;
 uniform int drawMode = 0;
 uniform int numParticles = 0;
+uniform int N;
 
 uniform int particleSize = 2;
 uniform float transparency = .3;
@@ -52,7 +53,7 @@ void main() {
 	}
 
 	if(drawMode == 1) {
-		float mass = 3000 * particleMass + 1000;
+		float mass = N + .4*N;
 
 		float escapeVelocity = sqrt(2 * mass / length(particlePosition));
 		vec3 normal = normalize(particlePosition);

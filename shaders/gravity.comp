@@ -27,16 +27,14 @@ void main() {
 
 	Particle p1 = particleData[id];
 
-	for(int i = 0; i < particleData.length(); i++) {
+	for(int i = 0; i < particleData.length(); ++i) {
 		if(i == id) continue;
-		Particle p2	  = particleData[i];
-		vec3 diff	  = p2.position - p1.position;
-		float	  dist_sq = dot(diff, diff);
-		float	  dist	  = sqrt(dist_sq);
-		if(dist < .0001) {
-			continue;
-		}
-		float	  div	  = 1.f / (max(dist_sq, EPS) * dist);
+		Particle p2		= particleData[i];
+		vec3  diff		= p2.position - p1.position;
+		float dist_sq	= dot(diff, diff);
+		dist_sq = dist_sq + EPS*EPS; // Avoid division by zero
+		float inv_dist	= inversesqrt(dist_sq);
+		float div		= 1.f / dist_sq * inv_dist;
 		p1.velocity += diff * p2.mass * div * deltaTime;
 	}
 
