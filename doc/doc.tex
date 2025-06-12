@@ -20,6 +20,7 @@
 
 \usepackage{numprint}
 \usepackage{microtype}
+\usepackage{bm}
 %\usepackage{biblatex}[backend=bibtex, style=authoryear]
 %\selectlanguage{bulgarian}
 
@@ -143,7 +144,7 @@
 
 \subsection{Хардуер}
 
-Тестовете са проведени върху машина с процесор Intel Core i7-6700 и графичен процесор AMD Radeon RX 7600 с 2048 поточни процесора и операционна система EndeavourOS Linux 6.13.7. 
+Тестовете са проведени върху машина с процесор Intel Core i7-6700 и графичен процесор AMD Radeon RX 7600 (обозначен по-долу $GPU1$) с 2048 поточни процесора и операционна система EndeavourOS Linux 6.13.7. Втори тест е проведен върху машина с графичен процесор Radeon 530 Mobile GDDR5 (обозначен по-долу $GPU2$) с 384 поточни процесора.
 
 \subsection{Тестови данни}
 
@@ -153,18 +154,11 @@
 
 На фигура \ref{fig:time} е показано сравнение на времето за изпълнение на симулацията върху CPU и GPU. Времето е измерено в микросекунди ($\mu s$) и е логаритмично скалирано спрямо броя на телата $N$. От графиката се вижда, че времето за изпълнение на симулацията върху GPU е значително по-ниско от това върху CPU, особено при големи стойности на $N$. На фигура \ref{fig:speedup} е показано ускорението на GPU спрямо CPU, което достига до над $400$ пъти при $N = 10^5$. Това показва, че паралелизацията на N-Body симулацията върху GPU е изключително ефективна и може да се използва за значително ускоряване на изчисленията.
 
-Остава да оценим оптималността на паралелизацията. Знаем, че имплементацията на последователния алгоритъм спестява около половината операции чрез съображението по-горе. Освен това, всяко ядро на процесора е способно да работи на честота до 4 GHz, докато използвания графичния процесор не може да поддържа честоти над 2.3 GHz за дълго време. Така знаейки и максималния хардуерен паралелизъм на графичния ускорител - $2048$ можем да изчислим максималното теоретично ускорение, което може да се постигне. То е:
-\begin{equation}
-	\begin{aligned}
-		S_{max} &= 2048 \cdot \frac{2.3}{4} \cdot \frac{1}{2} \\
-		&\approx 588.8
-	\end{aligned}
-\end{equation}
+Остава да оценим оптималността на паралелизацията. Първо нека разгледаме $GPU1$. Знаем, че имплементацията на последователния алгоритъм спестява около половината операции чрез съображението по-горе. Освен това, всяко ядро на процесора е способно да работи на честота до 4 GHz, докато използвания графичния процесор не може да поддържа честоти над 2.3 GHz за дълго време. Така знаейки и максималния хардуерен паралелизъм на графичния ускорител - $2048$ можем да изчислим грубо максималното теоретично ускорение, което може да се постигне. То е $ S_{max} = 2048 \cdot \frac{2.3}{4} \cdot \frac{1}{2} \approx 588.8$.
 
-Това е теоретичното максимално ускорение, което може да се постигне при идеални условия. Виждаме, че реалното ускорение достига до $425$, и получаваме ефективност на паралелизацията $E = \frac{425}{588.8} \approx 0.722$, с което считаме, че паралелизацията е близкo до оптимална. Пълна таблица с резултати от тестовете е показана на фигура \ref{fig:table}.
+Това е теоретичното максимално ускорение, което може да се постигне при идеални условия. Виждаме, че реалното ускорение достига до $425$, и получаваме ефективност на паралелизацията $E = \frac{425}{588.8} \approx 0.722$, с което считаме, че паралелизацията е близкo до оптимална. 
 
-
-
+В случая на $GPU2$ можем да направим подобна оценка. С $384$ поточни процесора и средна честота от $0.8$ GHz, теоретичното максимално ускорение е $S_{max} = 384 \cdot \frac{0.8}{4} \cdot \frac{1}{2} \approx 38.4 $ и достигнатото ускорение е $S = 24$, което дава ефективност $E = \frac{24}{38.4} \approx 0.625$. Това показва, че паралелизацията е по-малко ефективна върху по-слабия графичен процесор, но все пак постига значително ускорение спрямо CPU. Пълна таблица с резултати от тестовете е показана на фигура \ref{fig:table}.
 
 \begin{figure}
 \caption{Графика на времето за изпълнение на симулацията}
@@ -175,7 +169,7 @@
 	%title={Сравнение на времето за изпълнение върху CPU и GPU},
 	xlabel={log(N)},
 	ylabel={log(Време) (us)},
-	legend style={at={(0.02,0.75)}, anchor=south west},
+	legend style={at={(0.02,0.65)}, anchor=south west},
 	grid=major,
 	width=0.8\textwidth,
 	height=0.5\textwidth,
@@ -190,9 +184,14 @@
 \addplot table [
 	col sep=comma,
 	x={N},
-	y={GPU},
+	y={GPUOne},
 	] {./data.csv};
-\legend{CPU, GPU};
+\addplot table [
+	col sep=comma,
+	x={N},
+	y={GPUTwo},
+	] {./data.csv};
+\legend{CPU, GPU1, GPU2};
 \end{axis}
 \end{tikzpicture}
 \end{figure}
@@ -205,8 +204,8 @@
 \begin{axis}[
 	title={},
 	xlabel={log(N)},
-	ylabel={Ускорение (CPU / GPU)},
-	legend pos=outer north east,
+	ylabel={Ускорение $\bm {(T_{CPU} / T_{GPU)}}$},
+	legend style={at={(0.02,0.75)}, anchor=south west},
 	grid=major,
 	width=0.8\textwidth,
 	height=0.5\textwidth,
@@ -214,27 +213,68 @@
 \addplot table [
 	col sep=comma,
 	x={N},
-	y={Speedup},
+	y={SpeedupOne},
 	] {./data.csv};
+\addplot table [
+	col sep=comma,
+	x={N},
+	y={SpeedupTwo},
+	] {./data.csv};
+\legend{GPU1, GPU2};
 \end{axis}
 \end{tikzpicture}
 \end{figure}
 
+\begin{figure}
+\caption{Графика на ефективността на паралелизацията}
+\label{fig:efficiency}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+	title={},
+	xlabel={log(N)},
+	ylabel={Ефективност},
+	legend style={at={(0.765,0.02)}, anchor=south west},
+	grid=major,
+	width=0.8\textwidth,
+	height=0.5\textwidth,
+]
+\addplot table [
+	col sep=comma,
+	x={N},
+	y={EfficiencyOne},
+	] {./data.csv};
+\addplot table [
+	col sep=comma,
+	x={N},
+	y={EfficiencyTwo},
+	] {./data.csv};
+\legend{GPU1, GPU2};
+\end{axis}
+\end{tikzpicture}
+\end{figure}
+
+
 \npdecimalsign{.}
-\nprounddigits{2}
+\nprounddigits{3}
 
 \begin{figure}
-\caption{Таблица с резултати от тестовете}
+\caption{Таблица с резултати от тестовете \\ 
+}
 \label{fig:table}
-\centering
-\begin{tabularx}{.95\textwidth}{|X|X|X|n{4}{2}|}%
+\noindent\makebox[\textwidth]{%
+\begin{tabularx}{1.2\textwidth}{|X|X|X|n{3}{3}|n{1}{3}|X|n{2}{3}|n{1}{3}|}%
 	\hline
-	\bfseries N & \bfseries {CPU time ($\mu s$)} & \bfseries {GPU time ($\mu s$)} & \bfseries Speedup
+	$\bm{N}$ & $\bm{T_{CPU} (\mu s)}$ & $\bm {T_{GPU1} (\mu s)}$ & $\bm {S_1}$ & $\bm {E_1}$ & $\bm {T_{GPU2} (\mu s)}$ & $\bm {S_2}$ & \bfseries {$\bm {E_2}$}
 \csvreader[head to column names]{data.csv}{}
-	{\\\hline \N & \CPU & \GPU & \Speedup} 
+	{\\\hline \N & \CPU & \GPUOne & \SpeedupOne & \EfficiencyOne & \GPUTwo & \SpeedupTwo & \EfficiencyTwo}%
 	\\
 	\hline
 \end{tabularx}
+}
+\begin{center}
+	Тук $\bm{T_{CPU}}$, $\bm{T_{GPU1}}$ и $\bm{T_{GPU2}}$ са времето за изпълнение на симулацията върху $CPU$, $GPU1$ и $GPU2$ съответно, $\bm{S_1}$ и $\bm{S_2}$ са ускорението на $GPU1$ и $GPU2$ спрямо $CPU, а $\bm{E_1}$ и $\bm{E_2}$ са ефективността на паралелизацията върху $GPU1$ и $GPU2$, пресметнати спрямо съображенията по-горе.
+\end{center}
 \end{figure}
 
 \end{sloppypar}
