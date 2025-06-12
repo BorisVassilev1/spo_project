@@ -8,9 +8,9 @@ const char *NBodyCPU::name = "NBodyCPU";
 void NBodyInstanced::createParticles(std::size_t numParticles, const std::function<void(const Particle &)> &initFunc) {
 	std::random_device				rd;
 	std::mt19937					gen(rd());
-	std::normal_distribution<float> d(0, 30);
+	std::normal_distribution<float> d(0, 60);
 
-	float mass = numParticles + .4 * numParticles;
+	float mass = numParticles + .2 * numParticles;
 
 	for (std::size_t i = 0; i < numParticles; ++i) {
 		float x = d(gen);
@@ -38,12 +38,12 @@ void NBodyInstanced::createParticles(std::size_t numParticles, const std::functi
 }
 
 void NBodyInstanced::init() {
-	this->asman	   = scene->getSystem<ygl::AssetManager>();
-	if(draw) this->renderer = scene->getSystem<ygl::Renderer>();
+	this->asman = scene->getSystem<ygl::AssetManager>();
+	if (draw) this->renderer = scene->getSystem<ygl::Renderer>();
 
 	reset();
 
-	if(!draw) return;
+	if (!draw) return;
 	ygl::VFShader *shader = new ygl::VFShader("./shaders/particle.vs", "./shaders/particle.fs");
 	particleShaderIndex	  = asman->addShader(shader, "particleShader", false);
 
@@ -65,7 +65,8 @@ void NBodyInstanced::init() {
 		if (shader->hasUniform("numParticles")) shader->setUniform("numParticles", (int)numParticles);
 		if (shader->hasUniform("particleSize")) shader->setUniform("particleSize", (int)particleSize);
 		if (shader->hasUniform("transparency")) shader->setUniform("transparency", transparency);
-		if(shader->hasUniform("N")) shader->setUniform("N", (int)N);
+		if (shader->hasUniform("N")) shader->setUniform("N", (int)N);
+		if (shader->hasUniform("sharpness")) shader->setUniform("sharpness", (float)sharpness);
 
 		ParticleMesh *mesh = (ParticleMesh *)asman->getMesh(particleMeshIndex);
 		mesh->bind();
@@ -74,7 +75,7 @@ void NBodyInstanced::init() {
 		glBlendEquation(GL_FUNC_ADD);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-		glDrawArrays(GL_POINTS, 0, numParticles);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 3, numParticles);
 
 		glDisable(GL_BLEND);
 		glEnable(GL_DEPTH_TEST);

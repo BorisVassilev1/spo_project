@@ -34,15 +34,26 @@ struct alignas(16) ParticleData {
 // TODO!!!
 class ParticleMesh : public ygl::MultiBufferMesh {
    public:
-	ygl::MutableBuffer &vertexBuffer;	  // particles
+	ygl::MutableBuffer &vertexBuffer;		// particles
+	ygl::MutableBuffer	triangleBuffer;		// triangle for particles
 
-	ParticleMesh(std::size_t numParticles, ygl::MutableBuffer &buff) : vertexBuffer(buff) {
+	ParticleMesh(std::size_t numParticles, ygl::MutableBuffer &buff)
+		: vertexBuffer(buff), triangleBuffer(GL_ARRAY_BUFFER, 12 * sizeof(float), GL_STATIC_DRAW) {
 		this->verticesCount = numParticles;
 		this->createVAO();
 		glBindVertexArray(this->getVAO());
 
-		this->addVBO(0, 4, vertexBuffer.getID(), GL_FLOAT, 0, sizeof(ParticleData), (const void *)0);
-		this->addVBO(1, 4, vertexBuffer.getID(), GL_FLOAT, 0, sizeof(ParticleData), (const void *)(4 * sizeof(float)));
+		this->addVBO(0, 4, vertexBuffer.getID(), GL_FLOAT, 1, sizeof(ParticleData), (const void *)0);
+		this->addVBO(1, 4, vertexBuffer.getID(), GL_FLOAT, 1, sizeof(ParticleData), (const void *)(4 * sizeof(float)));
+
+		float triangle[] = {
+			0.0f,	  2.0f,	 0.f, 1.f,	   // bottom left
+			1.7321f,  -1.0f, 0.f, 1.f,	   // bottom right
+			-1.7321f, -1.0f, 0.f, 1.f,	   // top
+		};
+		this->triangleBuffer.set((void *)triangle, 12 * sizeof(float));
+
+		this->addVBO(2, 4, triangleBuffer.getID(), GL_FLOAT, 0, sizeof(float) * 4, (const void *)0);
 
 		cullFace = false;
 
@@ -65,8 +76,11 @@ class NBodyInstanced : public ygl::ISystem {
 	uint			   material_index	   = -1;
 	int				   particleSize		   = 2;
 	float			   transparency		   = .3;
+	float			   sharpness		   = 1.0f;
+	bool			   running			   = true;
 
-	bool draw = true;
+	bool draw  = true;
+	int	 frame = 0;
 
 	enum DrawMode : int {
 		WHITE,
@@ -94,6 +108,7 @@ class NBodyInstanced : public ygl::ISystem {
 	void gui() {
 		ImGui::Begin("NBody");
 		ImGui::Text("Particles: %zu", numParticles);
+		ImGui::Text("Frame: %d", frame);
 		float dt = deltaTime * 100;
 		ImGui::InputFloat("Delta Time", &dt, 0, 1);
 		deltaTime = dt / 100;
@@ -102,8 +117,17 @@ class NBodyInstanced : public ygl::ISystem {
 
 		ImGui::SliderFloat("transparency", &transparency, 0.f, 1.f);
 		ImGui::SliderInt("particle size", &particleSize, 1, 20);
+		ImGui::SliderFloat("sharpness", &sharpness, 0.f, 10.f);
+
+		if (ImGui::Button("Start/Stop")) running = !running;
 
 		ImGui::End();
+	}
+
+	void saveFrame(std::string folder) {
+		std::string filename = folder + std::format("/nbody_frame_{:05d}.jpg", frame);
+		renderer->screenShot(filename);
+		++frame;
 	}
 };
 
@@ -121,7 +145,7 @@ class NBodyGPU : public NBodyInstanced {
 	}
 
 	void computeGPU() {
-		int y = (numParticles + velocityUpdate->groupSize.x-1) / velocityUpdate->groupSize.x;
+		int y = (numParticles + velocityUpdate->groupSize.x - 1) / velocityUpdate->groupSize.x;
 		int x = velocityUpdate->groupSize.x;
 
 		velocityUpdate->bind();
@@ -146,9 +170,13 @@ class NBodyGPU : public NBodyInstanced {
 		dbLog(ygl::LOG_DEBUG, "count: ", particles.size());
 		dbLog(ygl::LOG_DEBUG, "size: ", sizeof(Particle));
 		setParticles(particles);
+		frame = 0;
 	}
 
-	void doWork() override { computeGPU(); }
+	void doWork() override {
+		if (!running) return;
+		computeGPU();
+	}
 
 	void write(std::ostream &) override { assert(0); }
 	void read(std::istream &) override { assert(0); }
@@ -189,7 +217,10 @@ class NBodyCPU : public NBodyInstanced {
 		// this->setParticles(particles);
 	}
 
-	void doWork() override { computeCPU(); }
+	void doWork() override {
+		if (!running) return;
+		computeCPU();
+	}
 
 	void write(std::ostream &) override { assert(0); }
 	void read(std::istream &) override { assert(0); }

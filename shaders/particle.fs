@@ -8,10 +8,17 @@ in vec3 vVertexPos;
 out vec4 fragColor;
 
 uniform float particleRadius;
+uniform float sharpness;
 
 void main() {
 	
 	fragColor = vColor;
-	
-	//fragColor = vec4(vec3(sin(vVertexPos.x* 100 + vVertexPos.y* 100)), 1.0);
+	if(length(vVertexPos) > 1.f) {
+		discard;
+	}
+
+	float fact = 1.0 - length(vVertexPos);
+	fact = pow(fact, sharpness);
+
+	fragColor = vec4(fact * vColor.rgb, vColor.a);
 }

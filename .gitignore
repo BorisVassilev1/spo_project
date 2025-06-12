@@ -8,4 +8,9 @@ doc/*
 !doc/doc.tex
 !doc/refs.bib
 !doc/data.csv
+!doc/doc.pdf
 *.log
+*.mp4
+*.jpg
+animation/
+*.blend*

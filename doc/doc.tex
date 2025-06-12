@@ -1,6 +1,6 @@
 %! TEX root = ./doc.tex
 
-\documentclass[12pt, a4paper]{article}
+\documentclass[11pt, a4paper]{article}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -41,6 +41,16 @@
 
 \maketitle
 
+\noindent\makebox[\textwidth]{%
+\begin{minipage}{0.48\textwidth}
+	\includegraphics[width=\textwidth]{frame1.jpg}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}
+	\includegraphics[width=\textwidth]{frame2.jpg}
+\end{minipage}
+}
+\hspace{0.5cm}
+
 %% Group authors per affiliation:
 \begin{sloppypar}
 
@@ -49,6 +59,8 @@
 	Проблемът N-Body е класически проблем в компютърната физика, който изисква изчисляване на гравитационните взаимодействия между N тела. Този доклад разглежда паралелизацията на този проблем върху графичен процесор (GPU) с цел ускоряване на изчисленията. Използван OpenGL за имплементация на алгоритъма, като се сравняват резултатите с последователно изпълнение върху CPU. Резултатите показват значително ускорение при използване на GPU, особено при големи стойности на N.
 
 \noindent\makebox[\linewidth]{\rule{\textwidth}{0.4pt}}
+
+
 
 \section{Анализ на проблема}
 

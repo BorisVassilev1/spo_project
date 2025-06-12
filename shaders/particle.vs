@@ -21,23 +21,14 @@ uniform float transparency = .3;
 
 layout(location = 0) in vec4 particleData0;
 layout(location = 1) in vec4 particleData1;
-
-vec3 positions[3] = vec3[3](
-	vec3(0.0, 0.0, 0.0),
-	vec3(1.0, 0.0, 0.0),
-	vec3(0.5, 1.0, 0.0)
-);
-
+layout(location = 2) in vec4 vertexData;
 
 void main() {
 	vec3 particlePosition = particleData0.xyz;
 	float particleMass = particleData0.w;
 	vec3 particleVelocity = particleData1.xyz;
 
-	// Calculate the position of the vertex
-	//vec3 position = particlePosition + positions[gl_VertexID] * .1;
-	vec3 position = particlePosition;
-	//position.xy += .2 * positions[gl_VertexID % 3].xy;
+	vec3 position = particlePosition + particleSize * vertexData.xyz * .1;
 
 	// Set the gl_Position
 	//gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0);
@@ -45,7 +36,7 @@ void main() {
 
 	gl_PointSize = particleSize;
 
-	vVertexPos = position;
+	vVertexPos = vertexData.xyz;
 
 
 	if(drawMode == 0) {
@@ -64,9 +55,9 @@ void main() {
 	}
 
 	if(drawMode == 2) {
-		vec4 col2 = vec4(0.0, 1.0, 0.0, 1.0);
-		vec4 col1 = vec4(1.0, 0.0, 0.0, .3);
-		vColor = mix(col1, col2, particleMass / 10);
+		vec4 col2 = vec4(100.0, 100.0, 100.0, 1.0);
+		vec4 col1 = vec4(1.0, .2, .05, transparency);
+		vColor = mix(col1, col2, float(particleMass > 100.f));
 	}
 }
 
