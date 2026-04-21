@@ -8,6 +8,7 @@
 #include <entities.h>
 #include <mesh.h>
 #include <renderer.h>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 #include "imgui.h"
 
